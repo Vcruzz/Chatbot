@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambiente de Teste - Bot Liceu Jardim</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; display: flex; }
+        
+        /* Simulação da Sidebar do Liceu */
+        .sidebar { width: 250px; background-color: #004085; color: white; height: 100vh; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+        .avatar { width: 100px; height: 100px; background-color: #ccc; border-radius: 50%; margin-bottom: 15px; background-image: url('https://cdn-icons-png.flaticon.com/512/3135/3135715.png'); background-size: cover; }
+        .user-info { text-align: center; }
+        .user-name { font-weight: bold; font-size: 1.1em; display: block; margin-bottom: 5px; }
+        .user-role { font-size: 0.9em; opacity: 0.8; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; }
+        
+        /* Área de Conteúdo */
+        .content { flex: 1; padding: 40px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* Painel de Controle de Teste */
+        .test-controls { background: #ffeeba; border: 1px solid #ffdf7e; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .btn-test { padding: 8px 15px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
+        .btn-prof { background-color: #28a745; }
+        .btn-aluno { background-color: #17a2b8; }
+        .btn-pai { background-color: #ffc107; color: #333; }
+
+        /* Dados escondidos (Simulando campos hidden do ASP.NET se houver) */
+        .hidden-data { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="avatar"></div>
+        <div class="user-info">
+            <span id="lblNomeSobrenomeUser" class="user-name">Victor Cruz</span>
+            <span id="lblTipoUser" class="user-role">Colaborador</span>
+        </div>
+    </div>
+
+    <div class="content">
+        
+        <div class="test-controls">
+            <h3>🛠️ Painel de Teste de Identidade</h3>
+            <p>Clique abaixo para simular diferentes usuários e <b>recarregue a página</b> (F5) para testar o bot.</p>
+            <button class="btn-test btn-prof" onclick="mudarPerfil('Carlos Professor', 'Professor', 'prof@liceujardim.com.br')">Ser Professor</button>
+            <button class="btn-test btn-aluno" onclick="mudarPerfil('Joãozinho Aluno', 'Estudante', 'aluno@liceu.com.br')">Ser Aluno</button>
+            <button class="btn-test btn-pai" onclick="mudarPerfil('Maria Mãe', 'Responsável', 'mae@gmail.com')">Ser Pai/Mãe</button>
+        </div>
+
+        <div class="card">
+            <h2>Dados Simulados na Tela (ASP.NET)</h2>
+            <p>O robô está lendo estes dados invisíveis:</p>
+            <ul>
+                <li><b>Nome (ID: lblNomeSobrenomeUser):</b> <span id="debug-nome">Victor Cruz</span></li>
+                <li><b>Cargo (ID: lblTipoUser):</b> <span id="debug-cargo">Colaborador</span></li>
+                <li><b>E-mail (ID: MainContent_lblEmailEducacional):</b> <span id="MainContent_lblEmailEducacional">victor.cruz@liceujardim.com.br</span></li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h3>🧪 O que testar?</h3>
+            <ol>
+                <li>Veja se o bot diz "Boa tarde, [Nome]" correto.</li>
+                <li><b>Como Professor:</b> Digite "Meu projetor quebrou". (Deve abrir chamado).</li>
+                <li><b>Como Aluno:</b> Digite "Meu projetor quebrou". (Deve ser bloqueado).</li>
+                <li><b>Geral:</b> Pergunte "Como acesso o app novo?". (Deve responder o FAQ).</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Lógica dos Botões de Teste (Apenas para este arquivo)
+        function mudarPerfil(nome, cargo, email) {
+            localStorage.setItem('teste_nome', nome);
+            localStorage.setItem('teste_cargo', cargo);
+            localStorage.setItem('teste_email', email);
+            location.reload(); // Recarrega para o bot pegar os dados novos
+        }
+
+        // Recupera dados do teste ou usa padrão
+        document.addEventListener('DOMContentLoaded', () => {
+            if(localStorage.getItem('teste_nome')) {
+                document.getElementById('lblNomeSobrenomeUser').innerText = localStorage.getItem('teste_nome');
+                document.getElementById('lblTipoUser').innerText = localStorage.getItem('teste_cargo');
+                document.getElementById('MainContent_lblEmailEducacional').innerText = localStorage.getItem('teste_email');
+                
+                // Atualiza debug visual
+                document.getElementById('debug-nome').innerText = localStorage.getItem('teste_nome');
+                document.getElementById('debug-cargo').innerText = localStorage.getItem('teste_cargo');
+            }
+        });
+
+        // -----------------------------------------------------------
+        // AQUI COMEÇA A INTEGRAÇÃO REAL
+        // -----------------------------------------------------------
+        
+        window.addEventListener('dfMessengerLoaded', function (event) {
+            const dfMessenger = document.querySelector('df-messenger');
+            
+            // 1. Captura
+            var nomeUsuario = document.getElementById('lblNomeSobrenomeUser')?.innerText.trim() || 'Visitante';
+            var cargoUsuario = document.getElementById('lblTipoUser')?.innerText.trim() || 'Estudante';
+            var emailUsuario = document.getElementById('MainContent_lblEmailEducacional')?.innerText.trim() || '';
+
+            // 2. Saudação + Contexto
+            var hora = new Date().getHours();
+            var saudacao = (hora < 12) ? "Bom dia" : (hora < 18) ? "Boa tarde" : "Boa noite";
+            var textoSaudacao = `${saudacao}, ${nomeUsuario}! Vi que você é ${cargoUsuario}. Como posso ajudar?`;
+
+            dfMessenger.renderCustomText(textoSaudacao, {
+                payload: {
+                    "contexts": [
+                        {
+                            "name": "dados_usuario",
+                            "lifespanCount": 99,
+                            "parameters": {
+                                "nome": nomeUsuario,
+                                "role": cargoUsuario,
+                                "email": emailUsuario,
+                                "origem": "portal_web"
+                            }
+                        }
+                    ]
+                }
+            });
+        });
+    </script>
+
+    <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+    <df-messenger
+      chat-title="Atendimento Liceu Jardim"
+      agent-id="837fa9ea-b282-443f-a0ea-99be2e6f2642"
+      language-code="pt-br"
+    ></df-messenger>
+
+</body>
+</html>
